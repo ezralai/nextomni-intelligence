@@ -2,7 +2,7 @@
 
 > **Google Data Analytics Capstone & Principal Data Science Portfolio**  
 > *Author:* Ezra Lai | Principal Data Scientist & Cognitive Systems Architect  
-> *Target System:* NextOmni Life & Study Operating System (Quantified-Self Telemetry)  
+> *Target System:* NextOmni Ecosystem 
 > *Framework:* Google Data Analytics 6-Phase Lifecycle (Ask, Prepare, Process, Analyze, Share, Act)
 
 ---
