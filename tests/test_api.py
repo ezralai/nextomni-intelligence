@@ -75,5 +75,56 @@ class TestNextOmniApiService(unittest.TestCase):
         self.assertGreater(len(data["key_achievements"]), 0)
         self.assertIsInstance(data["prescriptive_sprint_adjustments"], list)
 
+    def test_study_telemetry_ingestion(self):
+        sample_batch = {
+            "schemaVersion": "v2.4",
+            "exportedAt": "2026-10-18T12:00:00Z",
+            "userId": "usr_ezra_test",
+            "focusSessions": [
+                {
+                    "session_id": "fcs_test_1",
+                    "user_id": "usr_ezra_test",
+                    "session_date": "2026-10-18",
+                    "day_of_week": 1,
+                    "time_block": "morning",
+                    "course_id": "course-cs301",
+                    "course_code": "CS301",
+                    "planned_duration_min": 90.0,
+                    "actual_duration_min": 95.0,
+                    "interruption_count": 0,
+                    "flow_score": 9.2,
+                    "is_deep_work": 1,
+                    "completion_rate": 1.0,
+                    "created_at": "2026-10-18T12:00:00Z"
+                }
+            ],
+            "academicTasks": [
+                {
+                    "task_id": "tsk_test_1",
+                    "user_id": "usr_ezra_test",
+                    "course_id": "course-cs301",
+                    "title": "Raft Consensus Lab",
+                    "weightage": 25.0,
+                    "priority": "urgent",
+                    "estimated_hours": 15.0,
+                    "assigned_date": "2026-10-01",
+                    "due_date": "2026-10-25",
+                    "is_completed": 0,
+                    "procrastination_hours": 0.0,
+                    "created_at": "2026-10-18T12:00:00Z"
+                }
+            ]
+        }
+        response = self.client.post("/api/v1/telemetry/ingest-study", json=sample_batch)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["sessions_ingested"], 1)
+        self.assertEqual(data["tasks_ingested"], 1)
+        self.assertEqual(data["total_focus_min"], 95.0)
+        self.assertEqual(data["deep_work_percentage"], 100.0)
+        self.assertIn("burnout_risk_evaluation", data)
+        self.assertIn(data["burnout_risk_evaluation"]["risk_tier"], ["LOW", "MODERATE", "CRITICAL"])
+
 if __name__ == "__main__":
     unittest.main()
