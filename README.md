@@ -95,13 +95,13 @@ flowchart TB
   - Implementation of pseudonymous internal identifiers (`usr_...`).
   - Text reflections processed with PII scrubbing before LLM synthesis.
   - GDPR right-to-be-forgotten cascading constraints (`ON DELETE CASCADE`).
-- **Reproducible Seed Generator**: Located in [`data/seed_telemetry_generator.py`](file:///C:/Users/Ezra%20Lai/.gemini/antigravity-ide/scratch/nextomni-analytics-intelligence/data/seed_telemetry_generator.py), producing 180 days of realistic temporal dynamics and academic stress waves.
+- **Reproducible Seed Generator**: Located in [`data/seed_telemetry_generator.py`](data/seed_telemetry_generator.py), producing 180 days of realistic temporal dynamics and academic stress waves.
 
 ---
 
 ### Phase 3: Process (Advanced SQL Transformations & Feature Store)
-- **PostgreSQL DDL & Indexing**: Created in [`sql/01_telemetry_schema.sql`](file:///C:/Users/Ezra%20Lai/.gemini/antigravity-ide/scratch/nextomni-analytics-intelligence/sql/01_telemetry_schema.sql).
-- **Advanced Transformations**: Detailed in [`sql/02_feature_engineering_etl.sql`](file:///C:/Users/Ezra%20Lai/.gemini/antigravity-ide/scratch/nextomni-analytics-intelligence/sql/02_feature_engineering_etl.sql):
+- **PostgreSQL DDL & Indexing**: Created in [`sql/01_telemetry_schema.sql`](sql/01_telemetry_schema.sql).
+- **Advanced Transformations**: Detailed in [`sql/02_feature_engineering_etl.sql`](sql/02_feature_engineering_etl.sql):
   - **Rolling Window Calculations**: 7-day rolling focus minutes and flow scores via `AVG(...) OVER (ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)`.
   - **Gaps-and-Islands Habit Streaks**: Calculated by taking the difference between calendar date and sequential `ROW_NUMBER()` rank per habit.
   - **Chronotype Misalignment Index (CMI)**: Quantifies the percentage of high-friction academic work pushed into sub-optimal night blocks.
@@ -110,12 +110,12 @@ flowchart TB
 
 ### Phase 4: Analyze (Dual R Statistical & Python ML Engines)
 
-#### R Statistical Inference ([`r_analytics/nextomni_statistical_eda.qmd`](file:///C:/Users/Ezra%20Lai/.gemini/antigravity-ide/scratch/nextomni-analytics-intelligence/r_analytics/nextomni_statistical_eda.qmd)):
+#### R Statistical Inference ([`r_analytics/nextomni_statistical_eda.qmd`](r_analytics/nextomni_statistical_eda.qmd)):
 1. **Two-Way ANOVA & Tukey HSD**: Proves significant circadian modulation of cognitive energy ($F = 312.4, p < 0.0001$), identifying Morning as the optimal window for conceptual reasoning.
 2. **Multivariate OLS Regression**: Proves each interruption costs $-0.88$ flow points ($p < 0.0001, \text{Adj } R^2 = 0.64$), controlling for session length and course difficulty.
 3. **Kaplan-Meier Survival Analysis**: Log-Rank test ($p < 0.01$) proves that *Mindfulness* habits experience the sharpest drop-off in days 7–14, requiring micro-dose habit scaffolding.
 
-#### Python Machine Learning & LLM ([`python_ml/ml_pipeline.py`](file:///C:/Users/Ezra%20Lai/.gemini/antigravity-ide/scratch/nextomni-analytics-intelligence/python_ml/ml_pipeline.py) & [`python_ml/llm_cognitive_service.py`](file:///C:/Users/Ezra%20Lai/.gemini/antigravity-ide/scratch/nextomni-analytics-intelligence/python_ml/llm_cognitive_service.py)):
+#### Python Machine Learning & LLM ([`python_ml/ml_pipeline.py`](python_ml/ml_pipeline.py) & [`python_ml/llm_cognitive_service.py`](python_ml/llm_cognitive_service.py)):
 1. **Supervised Classification**: Gradient Boosting Ensemble predicting 7-Day Burnout Risk with 5-Fold Stratified Cross-Validation achieving high ROC-AUC and PR-AUC calibration.
 2. **Feature Importance (Gini & SHAP)**: Top predictive drivers are `rolling_14d_interruptions`, `sleep_hours`, and `rolling_7d_habit_rate`.
 3. **Time-Series Projection**: 7-day rolling autoregressive forecast of cognitive alertness.
@@ -124,7 +124,7 @@ flowchart TB
 ---
 
 ### Phase 5: Share (Tableau Executive Storyboard)
-Full data dictionary, Level of Detail (LOD) formulas, and dashboard wireframes documented in [`tableau/data_dictionary_and_calculated_fields.md`](file:///C:/Users/Ezra%20Lai/.gemini/antigravity-ide/scratch/nextomni-analytics-intelligence/tableau/data_dictionary_and_calculated_fields.md).
+Full data dictionary, Level of Detail (LOD) formulas, and dashboard wireframes documented in [`tableau/data_dictionary_and_calculated_fields.md`](tableau/data_dictionary_and_calculated_fields.md).
 - **Tab 1: Executive KPI Radar**: Focus hours gauge, deep work ratio, 7-day habit adherence, and burnout probability meter.
 - **Tab 2: Circadian & Flow Clock**: Bivariate hourly alertness heatmap overlaid with focus session initiation timestamps.
 - **Tab 3: Habit Longevity Matrix**: Category survival decay curves and active streak calendars.

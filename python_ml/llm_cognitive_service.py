@@ -13,6 +13,12 @@ from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 import joblib
 import numpy as np
+import pandas as pd
+import requests
+from dotenv import load_dotenv
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, "..", ".env"))
 
 app = FastAPI(
     title="NextOmni Telemetry Intelligence & GenAI Service",
@@ -20,8 +26,8 @@ app = FastAPI(
     description="Principal Analytics Microservice bridging ML prediction with LLM cognitive synthesis."
 )
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "burnout_risk_model.joblib")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # In-memory model cache
 model_artifact = None
@@ -34,6 +40,27 @@ def get_model():
         else:
             return None
     return model_artifact
+
+def call_gemini_api(prompt: str, system_prompt: Optional[str] = None) -> Optional[str]:
+    """Invokes Google Gemini API if GEMINI_API_KEY is configured, else returns None."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key or api_key == "your_gemini_api_key_here":
+        return None
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}]
+        }
+        if system_prompt:
+            payload["systemInstruction"] = {"parts": [{"text": system_prompt}]}
+        
+        response = requests.post(url, json=payload, timeout=8)
+        if response.status_code == 200:
+            data = response.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except Exception:
+        pass
+    return None
 
 # -----------------------------------------------------------------------------
 # Pydantic Schemas
@@ -116,27 +143,28 @@ def predict_burnout(features: TelemetryFeaturesInput):
     fatigue_ratio = features.total_interruptions / max(features.sleep_hours, 3.0)
     energy_deficit = max(0, 4.0 - features.avg_daily_energy) * (features.total_focus_min / 60.0)
 
-    feature_vector = np.array([[
-        features.total_focus_min,
-        features.deep_work_min,
-        features.avg_flow_score,
-        features.total_interruptions,
-        features.rolling_7d_focus_min,
-        features.rolling_7d_flow_score,
-        features.rolling_14d_interruptions,
-        features.sleep_hours,
-        features.sleep_quality,
-        features.caffeine_intake_mg,
-        features.avg_daily_energy,
-        features.habit_adherence_rate,
-        features.rolling_7d_habit_rate,
-        fatigue_ratio,
-        energy_deficit
-    ]])
+    feature_dict = {
+        "total_focus_min": features.total_focus_min,
+        "deep_work_min": features.deep_work_min,
+        "avg_flow_score": features.avg_flow_score,
+        "total_interruptions": features.total_interruptions,
+        "rolling_7d_focus_min": features.rolling_7d_focus_min,
+        "rolling_7d_flow_score": features.rolling_7d_flow_score,
+        "rolling_14d_interruptions": features.rolling_14d_interruptions,
+        "sleep_hours": features.sleep_hours,
+        "sleep_quality": features.sleep_quality,
+        "caffeine_intake_mg": features.caffeine_intake_mg,
+        "avg_daily_energy": features.avg_daily_energy,
+        "habit_adherence_rate": features.habit_adherence_rate,
+        "rolling_7d_habit_rate": features.rolling_7d_habit_rate,
+        "fatigue_ratio": fatigue_ratio,
+        "energy_deficit": energy_deficit
+    }
+    feature_df = pd.DataFrame([feature_dict])
 
     if artifact:
         model = artifact["model"]
-        prob = float(model.predict_proba(feature_vector)[0, 1])
+        prob = float(model.predict_proba(feature_df)[0, 1])
     else:
         # Heuristic fallback if model not pre-trained
         prob = min(0.95, max(0.05, (
@@ -214,12 +242,18 @@ def debrief_journal_reflection(debrief: JournalDebriefInput):
         cog_load = 0.50
         mentor_note = "Consistent baseline performance. Keep monitoring mid-afternoon energy levels to sustain consistency."
 
+    # Try Gemini LLM cognitive synthesis if API key is configured
+    gemini_reframe = call_gemini_api(
+        prompt=f"Analyze this student learning journal reflection: '{debrief.journal_text}'. User mood score: {debrief.mood_score}/5, energy: {debrief.energy_level}/5. Provide a constructive, psychologically grounded 2-sentence cognitive reframe and actionable suggestion.",
+        system_prompt="You are a Principal Cognitive Systems and Learning Scientist. Provide empathetic, evidence-based cognitive reframing for knowledge workers and computer science students."
+    )
+
     return JournalDebriefResponse(
         user_id=debrief.user_id,
         sentiment_polarity=sentiment,
         cognitive_load_index=cog_load,
         detected_distortions=distortions,
-        mentorship_feedback=mentor_note
+        mentorship_feedback=gemini_reframe if gemini_reframe else mentor_note
     )
 
 @app.post("/api/v1/telemetry/digest", response_model=WeeklyDigestResponse, tags=["LLM & Synthesis"])

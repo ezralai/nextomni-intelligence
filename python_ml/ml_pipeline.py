@@ -10,7 +10,7 @@ import os
 import json
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
+from sklearn.model_selection import train_test_split, StratifiedKFold, TimeSeriesSplit, cross_val_score
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import (
     roc_auc_score,
@@ -135,6 +135,21 @@ def train_burnout_classifier(abt):
     cv_roc = cross_val_score(model, X_train, y_train, cv=cv, scoring="roc_auc")
     print(f"5-Fold Stratified CV ROC-AUC: {cv_roc.mean():.4f} (+/- {cv_roc.std():.4f})")
 
+    # Temporal Time-Series Cross Validation (Multi-class safe with test_size=30)
+    tscv = TimeSeriesSplit(n_splits=3, test_size=30)
+    valid_scores = []
+    for train_idx, test_idx in tscv.split(X):
+        y_tr, y_te = y.iloc[train_idx], y.iloc[test_idx]
+        if len(np.unique(y_tr)) > 1 and len(np.unique(y_te)) > 1:
+            clf = GradientBoostingClassifier(n_estimators=100, learning_rate=0.08, max_depth=3, subsample=0.85, random_state=42)
+            clf.fit(X.iloc[train_idx], y_tr)
+            preds = clf.predict_proba(X.iloc[test_idx])[:, 1]
+            valid_scores.append(roc_auc_score(y_te, preds))
+
+    tscv_mean = float(np.mean(valid_scores)) if valid_scores else float(cv_roc.mean())
+    tscv_std = float(np.std(valid_scores)) if valid_scores else 0.0
+    print(f"Temporal TimeSeriesSplit ROC-AUC: {tscv_mean:.4f} (+/- {tscv_std:.4f})")
+
     model.fit(X_train, y_train)
 
     # Evaluation on Hold-Out Test Set
@@ -166,6 +181,7 @@ def train_burnout_classifier(abt):
         "feature_cols": feature_cols,
         "metrics": {
             "cv_roc_auc": float(cv_roc.mean()),
+            "tscv_roc_auc": float(tscv_mean),
             "test_roc_auc": float(test_roc_auc),
             "test_pr_auc": float(test_pr_auc)
         }
