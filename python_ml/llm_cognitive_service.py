@@ -136,12 +136,19 @@ class WeeklyDigestResponse(BaseModel):
 # Endpoints
 # -----------------------------------------------------------------------------
 @app.get("/health", tags=["System"])
+@app.get("/api/v1/health", tags=["System"])
 def health_check():
     model_loaded = os.path.exists(MODEL_PATH)
     return {
         "status": "healthy",
         "service": "NextOmni Analytics Intelligence",
-        "model_loaded": model_loaded
+        "model_loaded": model_loaded,
+        "version": "1.0.0",
+        "endpoints": [
+            "/api/v1/predict/burnout-risk",
+            "/api/v1/cognitive/debrief",
+            "/api/v1/telemetry/digest"
+        ]
     }
 
 @app.post("/api/v1/predict/burnout-risk", response_model=BurnoutPredictionResponse, tags=["Inference"])
